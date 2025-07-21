@@ -4,4 +4,9 @@
 
 expo-env.d.ts
 # @end expo-cli
+<<<<<<< HEAD
 node_modules
+=======
+node_modules/
+package-lock.json
+>>>>>>> 0e246683ebd92db6735c6c947303ce0e6cb51282
