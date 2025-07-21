@@ -34,14 +34,14 @@ export default function CalendarPage() {
       }
 
       const marcate: Record<string, any> = {}; //constanta marcate ii pentru a marca zilele cu cursuri
-      data.forEach(item => {
+      data.forEach((item, index) => {
         if (item.Data) {
             if (!marcate[item.Data]) {
                 marcate[item.Data] = { dots: [] };
             }
 
             marcate[item.Data].dots.push({
-            key: `${item.Data.Nume}`, // o sa fie id-ul cursului
+            key: `dot-${item.Data}-${index}`, // Fixed: use index to ensure unique keys
             color: 'blue', // course.color pe viitor
             selectedDotColor: 'white'
         });
@@ -128,7 +128,7 @@ export default function CalendarPage() {
           ) : (
             <FlatList
               data={cursuri}
-              keyExtractor={(_, index) => index.toString()}//Adica nu am id unic si folosesc indexul ca key?
+              keyExtractor={(item, index) => `${item.Data}-${item.Ora}-${item.Nume}-${index}`}//More unique key combining multiple fields
               renderItem={({ item }) => (
                 <View
                   style={{
