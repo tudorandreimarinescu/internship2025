@@ -31,6 +31,7 @@ export default function LoginScreen() {
       
       if (!result.success) {
         const error = result.error!;
+        console.error("Login failed with error:", error);
         Alert.alert("Eroare autentificare", error.message);
         return;
       }
@@ -51,8 +52,8 @@ export default function LoginScreen() {
             { 
               text: "Da", 
               onPress: () => {
-                console.log("User chose to continue without profile, navigating to home");
-                router.replace("/home");
+                console.log("User chose to continue without profile, navigating to calendar");
+                router.replace("/calendar");
               }
             }
           ]
@@ -65,9 +66,9 @@ export default function LoginScreen() {
       // Step 3: Add a small delay before navigation to ensure auth state is properly set
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      console.log("Navigating to /home...");
-      // Use absolute path for navigation
-      router.replace("/home");
+      console.log("Navigating to /calendar...");
+      // Navigate to calendar after successful login
+      router.replace("/calendar");
       
       console.log("Navigation command sent");
     } catch (error: any) {

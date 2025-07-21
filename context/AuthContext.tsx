@@ -8,7 +8,22 @@ import { StudentService } from "../app/models/StudentService";
 // Function to test database connection
 const testSupabaseConnection = async (): Promise<boolean> => {
   try {
-    const { error } = await supabase.from('Student').select('count').limit(1);
+    // Try with 'Student' table first
+    let { error } = await supabase.from('Student').select('count').limit(1);
+    
+    // If that fails, try with 'students' table
+    if (error && (
+      error.code === '42P01' || 
+      error.message?.includes('does not exist') ||
+      error.message?.includes('relation') ||
+      error.message?.includes('table') ||
+      error.code === 'PGRST116'
+    )) {
+      console.log('Trying with lowercase table name "students"...');
+      const result = await supabase.from('students').select('count').limit(1);
+      error = result.error;
+    }
+    
     if (error && (error.message?.includes('network') || error.message?.includes('Failed to fetch'))) {
       console.error('Database connection error:', error);
       return false;

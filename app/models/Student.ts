@@ -24,3 +24,6 @@ export interface StudentCreationData {
   Specializare: string;  // Specialization
   Email: string;         // Email
 }
+
+// Default export for the main Student interface
+export default Student;

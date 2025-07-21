@@ -69,12 +69,30 @@ export class StudentService {
     try {
       console.log(`Looking up student profile for email: ${email}`);
       
-      // With our updated RLS policies, this should now work
-      const { data, error } = await supabase
-        .from('Student')
+      // Try with 'students' first (lowercase, plural) - this seems to be what exists
+      let { data, error } = await supabase
+        .from('students')
         .select('*')
-        .eq('Email', email)
+        .eq('email', email)
         .single();
+      
+      // If that fails, try with 'Student' (capital, singular)
+      if (error && (
+        error.code === '42P01' || 
+        error.message?.includes('does not exist') ||
+        error.message?.includes('relation') ||
+        error.message?.includes('table') ||
+        error.code === 'PGRST116'
+      )) {
+        console.log('Trying with capital table name "Student"...');
+        const result = await supabase
+          .from('Student')
+          .select('*')
+          .eq('Email', email) // Also try capital column name
+          .single();
+        data = result.data;
+        error = result.error;
+      }
       
       if (!error && data) {
         console.log('Successfully found student profile:', data);
@@ -119,11 +137,31 @@ export class StudentService {
     try {
       console.log(`Checking if student email exists: ${email}`);
       
-      const { data, error } = await supabase
+      // Try with 'Student' first (current table name)
+      let { data, error } = await supabase
         .from('Student')
         .select('Email')
         .eq('Email', email)
         .limit(1);
+      
+      // If that fails, try with 'students' (lowercase, plural)
+      if (error && (
+        error.code === '42P01' || 
+        error.message?.includes('does not exist') ||
+        error.message?.includes('relation') ||
+        error.message?.includes('table') ||
+        error.code === 'PGRST116'
+      )) {
+        console.log('Trying with lowercase table name "students"...');
+        const result = await supabase
+          .from('students')
+          .select('email') // Also try lowercase column name
+          .eq('email', email)
+          .limit(1);
+        // Handle the type mismatch by treating data as any and checking existence
+        data = result.data as any;
+        error = result.error;
+      }
       
       if (error) {
         console.warn('Error checking for duplicate student email:', {
@@ -135,7 +173,7 @@ export class StudentService {
         return false;
       }
       
-      const exists = data && data.length > 0;
+      const exists = !!(data && data.length > 0);
       console.log(`Student email ${email} exists:`, exists);
       
       if (exists) {
@@ -152,3 +190,6 @@ export class StudentService {
 
   // Rest of your service methods...
 }
+
+// Default export for the StudentService class
+export default StudentService;
