@@ -22,31 +22,41 @@ export default function CalendarPage() {
   const current = new Date().toISOString().split('T')[0];
   const supabase = useSupabase();
 
+  // Harta de culori pentru fiecare tip curs
+  const colorMap: Record<string, string> = {
+    'Curs': '#B497BD',        // lavender
+    'Laborator': '#FFD6BA',   // peach
+    // poți adăuga și alte tipuri cu alte culori aici
+  };
+
   useEffect(() => {
     const fetchDates = async () => {
-      const { data, error } = await supabase // citeste toate datele din tabelul Cursuri
+      // Aici preluăm toate cursurile, nu doar datele, ca să știm tipul cursului pentru fiecare zi
+      const { data, error } = await supabase
         .from('Cursuri')
-        .select('Data');
+        .select('Data, Tip_curs');
 
       if (error) {
-        console.error('Eroare la citirea datelor:', error.message); // verifica in console din f12
+        console.error('Eroare la citirea datelor:', error.message);
         return;
       }
 
-      const marcate: Record<string, any> = {}; //constanta marcate ii pentru a marca zilele cu cursuri
+      const marcate: Record<string, any> = {};
+
       data.forEach((item, index) => {
         if (item.Data) {
-            if (!marcate[item.Data]) {
-                marcate[item.Data] = { dots: [] };
-            }
+          if (!marcate[item.Data]) {
+            marcate[item.Data] = { dots: [] };
+          }
+          // culoarea pentru tipul cursului, dacă nu există în map, punem albastru default
+          const culoare = colorMap[item.Tip_curs] || 'blue';
 
-            marcate[item.Data].dots.push({
-            key: `dot-${item.Data}-${index}`, // Fixed: use index to ensure unique keys
-            color: 'blue', // course.color pe viitor
-            selectedDotColor: 'white'
-        });
+          marcate[item.Data].dots.push({
+            key: `dot-${item.Data}-${index}`,
+            color: culoare,
+            selectedDotColor: 'white',
+          });
         }
-        
       });
 
       setMarkedDates(marcate);
@@ -55,29 +65,28 @@ export default function CalendarPage() {
     fetchDates();
   }, []);
 
-  // cand apas pe o zi, se afiseaza mai jos datele din ziua aia 
   const handleDayPress = async (day: any) => {
     setSelectedDate(day.dateString);
 
     const { data, error } = await supabase
       .from('Cursuri')
-      .select('Ora, Nume, Tip_curs, Profesor, Sala') // bag toate coloanele necesare
-      .eq('Data', day.dateString); // si le filtrez dupa 'Data'
+      .select('Ora, Nume, Tip_curs, Profesor, Sala')
+      .eq('Data', day.dateString);
 
     if (error) {
-      console.error('Eroare la citirea cursurilor:', error.message); // aci ii bai daca mai vad asta....
+      console.error('Eroare la citirea cursurilor:', error.message);
       return;
     }
 
-    setCursuri((data || []).map(item => ({ 
-      ...item, // adaug toate datele din baza de date
-      Data: day.dateString // aici am adaugat Data pentru a avea context, daca nu p 
+    setCursuri((data || []).map(item => ({
+      ...item,
+      Data: day.dateString
     })));
   };
 
   return (
-    <View style={{ flex: 1, paddingTop: 50, backgroundColor: isDark ? '#000' : '#fff' }}> 
-      <Calendar //stilul calendarului, se poate modifica daca nu plake
+    <View style={{ flex: 1, paddingTop: 50, backgroundColor: isDark ? '#000' : '#fff' }}>
+      <Calendar
         markingType="multi-dot"
         current={current}
         markedDates={{
@@ -92,16 +101,16 @@ export default function CalendarPage() {
         }}
         onDayPress={handleDayPress}
         theme={{
-          calendarBackground: isDark ? '#121212' : '#ffffff', // fundalul calendarului, si se si verifica daca e dark
-          textSectionTitleColor: isDark ? '#cccccc' : '#2e3a59',// culoarea titlului secțiunii, aka Luna
-          dayTextColor: isDark ? '#ffffff' : '#2e3a59',// culoarea textului zilei
-          todayTextColor: '#2196f3',// culoarea textului zilei de azi
-          selectedDayBackgroundColor: '#2196f3',// culoarea fundalului zilei selectate
-          selectedDayTextColor: '#ffffff',// culoarea textului zilei selectate
-          monthTextColor: isDark ? '#ffffff' : '#2e3a59', // culoarea textului lunii
-          arrowColor: '#2196f3',// culoarea săgeților de navigare, aia de acol dincolt
-          textDisabledColor: '#444444',// culoarea textului zilelor dezactivate, inca n-avem da mai vedem
-          textMonthFontWeight: 'bold', //textul lunii cu bold sa se vada 
+          calendarBackground: isDark ? '#121212' : '#ffffff',
+          textSectionTitleColor: isDark ? '#cccccc' : '#2e3a59',
+          dayTextColor: isDark ? '#ffffff' : '#2e3a59',
+          todayTextColor: '#2196f3',
+          selectedDayBackgroundColor: '#2196f3',
+          selectedDayTextColor: '#ffffff',
+          monthTextColor: isDark ? '#ffffff' : '#2e3a59',
+          arrowColor: '#2196f3',
+          textDisabledColor: '#444444',
+          textMonthFontWeight: 'bold',
           textDayFontSize: 16,
           textMonthFontSize: 18,
           textDayHeaderFontSize: 14
@@ -116,7 +125,6 @@ export default function CalendarPage() {
         }}
       />
 
-      {/* lista de sub calendar cu cursuri daca am selectat o zi */}
       {selectedDate !== '' && (
         <View style={{ paddingHorizontal: 20 }}>
           <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>
@@ -128,7 +136,7 @@ export default function CalendarPage() {
           ) : (
             <FlatList
               data={cursuri}
-              keyExtractor={(item, index) => `${item.Data}-${item.Ora}-${item.Nume}-${index}`}//More unique key combining multiple fields
+              keyExtractor={(item, index) => `${item.Data}-${item.Ora}-${item.Nume}-${index}`}
               renderItem={({ item }) => (
                 <View
                   style={{
