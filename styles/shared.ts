@@ -7,10 +7,13 @@ export const sharedStyles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#fff",
   },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingVertical: 24,
+  },
   image: {
     width: 220,
     height: 220,
-    resizeMode: "contain",
     marginVertical: 30,
   },
   title: {
@@ -26,6 +29,17 @@ export const sharedStyles = StyleSheet.create({
     padding: 12,
     marginBottom: 16,
   },
+  inputError: {
+    borderColor: "#dc2626",
+    borderWidth: 2,
+  },
+  inputHelperText: {
+    color: "#dc2626",
+    fontSize: 12,
+    marginTop: -12,
+    marginBottom: 8,
+    marginLeft: 4,
+  },
   button: {
     width: "100%",
     backgroundColor: "#3b82f6",
@@ -34,12 +48,44 @@ export const sharedStyles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 20,
   },
+  buttonDisabled: {
+    backgroundColor: "#9ca3af",
+    opacity: 0.7,
+  },
   buttonText: {
     color: "#fff",
     fontWeight: "bold",
   },
   link: {
     color: "#3b82f6",
+    fontWeight: "600",
+  },
+  errorContainer: {
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fca5a5",
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 20,
+    width: "100%",
+  },
+  errorText: {
+    color: "#dc2626",
+    fontSize: 14,
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  errorButton: {
+    backgroundColor: "#dc2626",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  errorButtonText: {
+    color: "#fff",
+    fontSize: 14,
     fontWeight: "600",
   },
 });

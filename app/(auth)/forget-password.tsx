@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 import { sharedStyles as styles } from "../../styles/shared";
 
@@ -9,7 +9,7 @@ export default function ForgetPasswordScreen() {
 
   const handleReset = () => {
     console.log("Reset password for:", email);
-    router.replace("/login");
+    router.replace("/(auth)/login");
   };
 
   return (
@@ -28,8 +28,8 @@ export default function ForgetPasswordScreen() {
         <Text style={styles.buttonText}>Send email</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.replace("/login")}>
-        <Text style={styles.link}>Already have an account? Login here</Text>
+      <TouchableOpacity onPress={() => router.replace("/(auth)/login")}>
+        <Text style={styles.link}>Already have an account?{" "}Login here</Text>
       </TouchableOpacity>
     </View>
   );

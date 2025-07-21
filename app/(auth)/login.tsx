@@ -1,19 +1,80 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { useAuth } from "../../context/AuthContext";
+import React, { useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { LoginCredentials, useAuth } from "../../context/AuthContext";
 import { sharedStyles as styles } from "../../styles/shared";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { handleLogin } = useAuth();
+  const { login } = useAuth();
 
-  const onLogin = async () => {
-    const success = await handleLogin(email, password);
-    if (success) {
+  const handleLogin = async () => {
+    if (isLoading) return; // Prevent multiple submissions
+    
+    setIsLoading(true);
+    try {
+      console.log("Încep procesul de autentificare pentru:", email);
+      
+      const credentials: LoginCredentials = { email, password };
+      const result = await login(credentials);
+      
+      if (!result.success) {
+        const error = result.error!;
+        Alert.alert("Eroare autentificare", error.message);
+        return;
+      }
+
+      console.log("Autentificare reușită pentru:", result.user?.email);
+      console.log("Student profile găsit:", !!result.student);
+      
+      if (!result.student) {
+        console.warn("No student profile found, showing alert");
+        Alert.alert(
+          "Profil lipsă", 
+          "Contul există dar profilul de student nu a fost găsit. Continuați oricum?",
+          [
+            { 
+              text: "Nu", 
+              style: "cancel"
+            },
+            { 
+              text: "Da", 
+              onPress: () => {
+                console.log("User chose to continue without profile, navigating to home");
+                router.replace("/home");
+              }
+            }
+          ]
+        );
+        return;
+      }
+      
+      console.log("Student profile found, proceeding with navigation");
+      
+      // Step 3: Add a small delay before navigation to ensure auth state is properly set
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      console.log("Navigating to /home...");
+      // Use absolute path for navigation
       router.replace("/home");
+      
+      console.log("Navigation command sent");
+    } catch (error: any) {
+      console.error("Excepție în procesul de autentificare:", error);
+      Alert.alert("Eroare neașteptată", error.message || "A apărut o eroare la autentificare");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -22,6 +83,7 @@ export default function LoginScreen() {
       <Image
         source={require("../../assets/images/login.png")}
         style={styles.image}
+        resizeMode="contain"
       />
 
       <Text style={styles.title}>Login</Text>
@@ -42,19 +104,36 @@ export default function LoginScreen() {
         secureTextEntry
       />
 
-      <TouchableOpacity style={styles.button} onPress={onLogin}>
-        <Text style={styles.buttonText}>Continue</Text>
+      <TouchableOpacity 
+        style={[styles.button, isLoading && styles.buttonDisabled]} 
+        onPress={handleLogin}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <ActivityIndicator size="small" color="#fff" style={{ marginRight: 8 }} />
+            <Text style={styles.buttonText}>Logging in...</Text>
+          </View>
+        ) : (
+          <Text style={styles.buttonText}>Continue</Text>
+        )}
       </TouchableOpacity>
 
       <View style={{ flexDirection: "row", marginBottom: 10 }}>
-        <Text>Don’t have an account? </Text>
-        <TouchableOpacity onPress={() => router.push("/register")}>
-          <Text style={styles.link}>Register here</Text>
+        <Text>Don&apos;t have an account?{" "}</Text>
+        <TouchableOpacity 
+          onPress={() => !isLoading && router.push("/(auth)/register")}
+          disabled={isLoading}
+        >
+          <Text style={[styles.link, isLoading && { opacity: 0.5 }]}>Register here</Text>
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity onPress={() => router.push("/forget-password")}>
-        <Text style={styles.link}>Forget password</Text>
+      <TouchableOpacity 
+        onPress={() => !isLoading && router.push("/(auth)/forget-password")}
+        disabled={isLoading}
+      >
+        <Text style={[styles.link, isLoading && { opacity: 0.5 }]}>Forget password</Text>
       </TouchableOpacity>
     </View>
   );
