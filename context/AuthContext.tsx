@@ -1,39 +1,9 @@
 // context/AuthContext.tsx
 import { Session, User } from "@supabase/supabase-js";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { supabase } from "../lib/supabase";
-import { Student, StudentCreationData } from "../app/models/Student";
-import { StudentService } from "../app/models/StudentService";
-
-// Function to test database connection
-const testSupabaseConnection = async (): Promise<boolean> => {
-  try {
-    // Try with 'Student' table first
-    let { error } = await supabase.from('Student').select('count').limit(1);
-    
-    // If that fails, try with 'students' table
-    if (error && (
-      error.code === '42P01' || 
-      error.message?.includes('does not exist') ||
-      error.message?.includes('relation') ||
-      error.message?.includes('table') ||
-      error.code === 'PGRST116'
-    )) {
-      console.log('Trying with lowercase table name "students"...');
-      const result = await supabase.from('students').select('count').limit(1);
-      error = result.error;
-    }
-    
-    if (error && (error.message?.includes('network') || error.message?.includes('Failed to fetch'))) {
-      console.error('Database connection error:', error);
-      return false;
-    }
-    return true;
-  } catch (error) {
-    console.error('Database connection test failed:', error);
-    return false;
-  }
-};
+import { Student, StudentCreationData } from "../models/Student";
+import { StudentService } from "../models/StudentService";
 
 // Types for clean API
 export interface AuthError {
@@ -95,6 +65,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [student, setStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
+  const [studentLoaded, setStudentLoaded] = useState(false); // Track if we've already loaded student
 
   useEffect(() => {
     const init = async () => {
@@ -105,6 +76,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (data.session?.user?.email) {
         const studentProfile = await loadStudentProfile(data.session.user.email);
         setStudent(studentProfile);
+        setStudentLoaded(true);
       }
       
       setLoading(false);
@@ -113,15 +85,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     init();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
+        console.log('Auth state changed:', event);
         setSession(session);
         
-        // Load student profile when user signs in
-        if (session?.user?.email) {
+        if (event === 'SIGNED_OUT') {
+          // Clear student data when user signs out
+          setStudent(null);
+          setStudentLoaded(false);
+          console.log('User signed out, cleared student data');
+        } else if (session?.user?.email && !studentLoaded) {
+          // Load student profile when user signs in, but only if not already loaded
           const studentProfile = await loadStudentProfile(session.user.email);
           setStudent(studentProfile);
-        } else {
-          setStudent(null);
+          setStudentLoaded(true);
         }
       }
     );
@@ -146,15 +123,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return yearNum >= 1 && yearNum <= 6;
   };
 
-  const loadStudentProfile = async (email: string): Promise<Student | null> => {
+  const loadStudentProfile = useCallback(async (email: string): Promise<Student | null> => {
     try {
+      console.log('Loading student profile for:', email);
       const studentProfile = await StudentService.getStudentByEmail(email);
+      console.log('Student profile loaded:', studentProfile ? `${studentProfile.Prenume} ${studentProfile.Nume}` : 'No profile found');
       return studentProfile;
     } catch (error) {
       console.error("Error loading student profile:", error);
       return null;
     }
-  };
+  }, []); // Memoize the function to prevent unnecessary recreations
 
   const login = async (credentials: LoginCredentials): Promise<AuthResult> => {
     const { email, password } = credentials;
@@ -171,18 +150,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
-      // Test connection first
-      const connectionTest = await testSupabaseConnection();
-      if (!connectionTest) {
-        return {
-          success: false,
-          error: {
-            type: 'connection',
-            message: 'Nu se poate conecta la baza de date. Verificați conexiunea internet.'
-          }
-        };
-      }
-
       // Authenticate with Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -323,18 +290,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
-      // Test connection first
-      const connectionTest = await testSupabaseConnection();
-      if (!connectionTest) {
-        return {
-          success: false,
-          error: {
-            type: 'connection',
-            message: 'Nu se poate conecta la baza de date. Verificați conexiunea internet.'
-          }
-        };
-      }
-
       // Check if student email already exists in the Student table
       console.log("Checking for existing student with email:", email);
       const studentExists = await StudentService.studentEmailExists(email);
@@ -462,10 +417,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async (): Promise<void> => {
     try {
-      await supabase.auth.signOut();
+      console.log("Starting logout process...");
+      
+      // Use local scope to avoid 403 errors on desktop/web
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
+      if (error) {
+        console.error("Supabase signOut error:", error);
+        // Continue with manual cleanup if server signout fails
+      } else {
+        console.log("Supabase signOut completed successfully");
+      }
+      
+      // Clear local state
+      setSession(null);
       setStudent(null);
+      setStudentLoaded(false);
+      console.log("Local state cleared");
+      
     } catch (error) {
       console.error("Logout error:", error);
+      // Ensure local state is cleared even if Supabase fails
+      setSession(null);
+      setStudent(null);
+      setStudentLoaded(false);
     }
   };
 

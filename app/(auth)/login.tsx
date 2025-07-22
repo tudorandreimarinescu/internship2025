@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -17,7 +17,14 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, session, loading } = useAuth();
+
+  // If user is already logged in, redirect to calendar
+  useEffect(() => {
+    if (!loading && session) {
+      router.replace("/calendar");
+    }
+  }, [session, loading, router]);
 
   const handleLogin = async () => {
     if (isLoading) return; // Prevent multiple submissions
