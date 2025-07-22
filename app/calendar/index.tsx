@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, Text, useColorScheme, View } from 'react-native';
+import { FlatList, Text, useColorScheme, View, TouchableOpacity, Alert, Platform } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { useSupabase } from '../../context/SupabaseProvider';
+import { useAuth } from '../../context/AuthContext';
+import { useRouter } from 'expo-router';
 
 // tip  pentru cursuri, astea se afiseaza în calendar si sunt afisate din baza de date
 type Curs = {
@@ -17,10 +19,58 @@ export default function CalendarPage() {
   const [markedDates, setMarkedDates] = useState<Record<string, any>>({});
   const [cursuri, setCursuri] = useState<Curs[]>([]);
   const [selectedDate, setSelectedDate] = useState('');
+  const [allCursuri, setAllCursuri] = useState<Curs[]>([]); // Cache all courses data
+  const [isLoading, setIsLoading] = useState(false);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const current = new Date().toISOString().split('T')[0];
   const supabase = useSupabase();
+  const { logout, user } = useAuth();
+  const router = useRouter();
+
+  const performLogout = async () => {
+    try {
+      console.log("Logout button pressed, starting logout...");
+      await logout();
+      console.log("Logout completed, navigating to login...");
+      
+      // Navigate immediately after logout
+      router.replace("/");
+      console.log("Navigation completed");
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Force navigation even if logout fails
+      router.replace("/");
+    }
+  };
+
+  const handleLogout = () => {
+    // For web/desktop, use confirm dialog as fallback
+    if (Platform.OS === 'web') {
+      const confirmed = confirm("Sigur doriți să vă deconectați?");
+      if (confirmed) {
+        performLogout();
+      }
+    } else {
+      // For mobile, use native Alert
+      Alert.alert(
+        "Logout",
+        "Sigur doriți să vă deconectați?",
+        [
+          {
+            text: "Anulează",
+            style: "cancel"
+          },
+          {
+            text: "Logout",
+            style: "destructive",
+            onPress: performLogout
+          }
+        ],
+        { cancelable: true } // Allow closing by clicking outside on desktop
+      );
+    }
+  };
 
   // Harta de culori pentru fiecare tip curs
   const colorMap: Record<string, string> = {
@@ -30,62 +80,99 @@ export default function CalendarPage() {
   };
 
   useEffect(() => {
-    const fetchDates = async () => {
-      // Aici preluăm toate cursurile, nu doar datele, ca să știm tipul cursului pentru fiecare zi
-      const { data, error } = await supabase
-        .from('Cursuri')
-        .select('Data, Tip_curs');
+    const fetchAllCourses = async () => {
+      if (isLoading) return; // Prevent multiple simultaneous requests
+      
+      setIsLoading(true);
+      console.log('Fetching all courses data...');
+      
+      try {
+        // Fetch all course data once
+        const { data, error } = await supabase
+          .from('Cursuri')
+          .select('Data, Ora, Nume, Tip_curs, Profesor, Sala');
 
-      if (error) {
-        console.error('Eroare la citirea datelor:', error.message);
-        return;
-      }
-
-      const marcate: Record<string, any> = {};
-
-      data.forEach((item, index) => {
-        if (item.Data) {
-          if (!marcate[item.Data]) {
-            marcate[item.Data] = { dots: [] };
-          }
-          // culoarea pentru tipul cursului, dacă nu există în map, punem albastru default
-          const culoare = colorMap[item.Tip_curs] || 'blue';
-
-          marcate[item.Data].dots.push({
-            key: `dot-${item.Data}-${index}`,
-            color: culoare,
-            selectedDotColor: 'white',
-          });
+        if (error) {
+          console.error('Eroare la citirea datelor:', error.message);
+          return;
         }
-      });
 
-      setMarkedDates(marcate);
+        if (data) {
+          setAllCursuri(data);
+          
+          // Build marked dates from all data
+          const marcate: Record<string, any> = {};
+          data.forEach((item, index) => {
+            if (item.Data) {
+              if (!marcate[item.Data]) {
+                marcate[item.Data] = { dots: [] };
+              }
+              const culoare = colorMap[item.Tip_curs] || 'blue';
+              marcate[item.Data].dots.push({
+                key: `dot-${item.Data}-${index}`,
+                color: culoare,
+                selectedDotColor: 'white',
+              });
+            }
+          });
+
+          setMarkedDates(marcate);
+          console.log('Course data loaded and calendar marked');
+        }
+      } catch (err) {
+        console.error('Error fetching courses:', err);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    fetchDates();
-  }, []);
+    fetchAllCourses();
+  }, []); // Only run once on component mount
 
-  const handleDayPress = async (day: any) => {
+  const handleDayPress = (day: any) => {
     setSelectedDate(day.dateString);
-
-    const { data, error } = await supabase
-      .from('Cursuri')
-      .select('Ora, Nume, Tip_curs, Profesor, Sala')
-      .eq('Data', day.dateString);
-
-    if (error) {
-      console.error('Eroare la citirea cursurilor:', error.message);
-      return;
+    
+    // Filter from cached data instead of making a new database call
+    const cursuriPentruZi = allCursuri.filter(curs => curs.Data === day.dateString);
+    setCursuri(cursuriPentruZi);
+    
+    if (cursuriPentruZi.length > 0) {
+      console.log(`Found ${cursuriPentruZi.length} courses for ${day.dateString}`);
+    } else {
+      console.log(`No courses found for ${day.dateString}`);
     }
-
-    setCursuri((data || []).map(item => ({
-      ...item,
-      Data: day.dateString
-    })));
   };
 
   return (
     <View style={{ flex: 1, paddingTop: 50, backgroundColor: isDark ? '#000' : '#fff' }}>
+      {/* Header with logout button */}
+      <View style={{ 
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        paddingHorizontal: 20, 
+        paddingBottom: 10 
+      }}>
+        <Text style={{ 
+          fontSize: 20, 
+          fontWeight: 'bold', 
+          color: isDark ? '#fff' : '#000' 
+        }}>
+          Calendar
+        </Text>
+        <TouchableOpacity
+          onPress={handleLogout}
+          style={{
+            backgroundColor: '#ff4444',
+            paddingHorizontal: 15,
+            paddingVertical: 8,
+            borderRadius: 5,
+          }}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>Logout</Text>
+        </TouchableOpacity>
+      </View>
+
       <Calendar
         markingType="multi-dot"
         current={current}

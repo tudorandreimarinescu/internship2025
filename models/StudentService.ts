@@ -1,4 +1,4 @@
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../lib/supabase";
 import { Student, StudentCreationData } from "./Student";
 
 // Helper function to log database errors with more context
@@ -65,18 +65,19 @@ export class StudentService {
       } as Student;
     }
   }
+  
   static async getStudentByEmail(email: string): Promise<Student | null> {
     try {
       console.log(`Looking up student profile for email: ${email}`);
       
-      // Try with 'students' first (lowercase, plural) - this seems to be what exists
+      // Try with 'Student' first (capital, singular) - this seems to be what exists
       let { data, error } = await supabase
-        .from('students')
+        .from('Student')
         .select('*')
-        .eq('email', email)
+        .eq('Email', email)
         .single();
       
-      // If that fails, try with 'Student' (capital, singular)
+      // If that fails, try with 'students' (lowercase, plural)
       if (error && (
         error.code === '42P01' || 
         error.message?.includes('does not exist') ||
@@ -84,44 +85,31 @@ export class StudentService {
         error.message?.includes('table') ||
         error.code === 'PGRST116'
       )) {
-        console.log('Trying with capital table name "Student"...');
+        console.log('Trying with lowercase table name "students"...');
         const result = await supabase
-          .from('Student')
+          .from('students')
           .select('*')
-          .eq('Email', email) // Also try capital column name
+          .eq('email', email) // Also try lowercase column name
           .single();
         data = result.data;
         error = result.error;
       }
       
       if (!error && data) {
-        console.log('Successfully found student profile:', data);
+        console.log('Successfully found student profile');
         return data as Student;
       }
       
-      // If there was an error or no data, log it with details
-      if (error) {
+      // If there was an error or no data, only log non-critical errors
+      if (error && error.code !== 'PGRST116') { // Don't log "no rows" errors
         console.warn('Could not fetch student profile:', {
           message: error.message,
-          code: error.code,
-          details: error.details
+          code: error.code
         });
-      } else {
-        console.warn('No student profile found for email:', email);
       }
       
-      // Create a temporary profile as fallback to allow the app to function
-      // even when there are database access issues
-      console.log('Creating temporary profile as fallback');
-      return {
-        id: -1,
-        Email: email,
-        Nume: "Unknown",
-        Prenume: "User",
-        Grupa: "",
-        An: 0,
-        Specializare: ""
-      } as Student;
+      // Return null instead of creating fallback profile to avoid confusion
+      return null;
     } catch (error) {
       console.error('Unexpected error in getStudentByEmail:', error);
       return null;
@@ -164,21 +152,22 @@ export class StudentService {
       }
       
       if (error) {
-        console.warn('Error checking for duplicate student email:', {
-          message: error.message,
-          code: error.code,
-          details: error.details
-        });
+        // Only log if it's not a "table doesn't exist" error
+        if (!error.message?.includes('does not exist') && 
+            !error.message?.includes('relation') && 
+            error.code !== '42P01' && 
+            error.code !== 'PGRST116') {
+          console.warn('Error checking for duplicate student email:', {
+            message: error.message,
+            code: error.code
+          });
+        }
         // If we can't check, assume it doesn't exist to allow registration
         return false;
       }
       
       const exists = !!(data && data.length > 0);
       console.log(`Student email ${email} exists:`, exists);
-      
-      if (exists) {
-        console.log('Found existing student(s):', data);
-      }
       
       return exists;
     } catch (error) {
