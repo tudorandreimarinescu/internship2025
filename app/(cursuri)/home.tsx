@@ -1,8 +1,8 @@
 import { Link, useRouter } from 'expo-router';
 import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
-export default function HomeScreen() {
+export default function CursuriHomeScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { logout, student } = useAuth();
@@ -49,32 +49,40 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
     padding: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
+    marginBottom: 30,
+    textAlign: 'center',
   },
   buttonContainer: {
-    marginBottom: 10, // Spațiere între butoane
+    marginBottom: 15,
+    width: '80%',
   },
   button: {
     backgroundColor: '#6200EE',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    borderRadius: 8,
     alignItems: 'center',
-    width: 200, // Dimensiune fixă pentru butoane
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   logoutButton: {
     backgroundColor: '#f44336',
+    marginTop: 20,
   },
   buttonText: {
-    color: '#FFF',
+    color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
 });

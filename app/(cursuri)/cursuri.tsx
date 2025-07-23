@@ -1,13 +1,31 @@
 import { useCourses } from '@/context/CoursesContext';
 import React from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View, TouchableOpacity, useColorScheme } from 'react-native';
+import { useRouter } from 'expo-router';
 
 export default function CoursesScreen() {
   const { courses, loading } = useCourses();
+  const router = useRouter();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  const handleGoBack = () => {
+    router.back(); // Use expo-router's back method
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Lista de cursuri</Text>
+    <View style={[styles.container, { backgroundColor: isDark ? '#121212' : '#f9f9f9' }]}>
+      {/* Header cu buton pentru navigare */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={handleGoBack}
+          style={[styles.headerButton, styles.backButton]}
+        >
+          <Text style={styles.headerButtonText}>Inapoi</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Text style={[styles.title, { color: isDark ? '#fff' : '#333' }]}>Lista de cursuri</Text>
 
       {loading ? (
         <Text style={styles.loadingText}>Se încarcă...</Text>
@@ -36,7 +54,27 @@ const styles = StyleSheet.create({
     marginTop: 20,
     backgroundColor: '#f9f9f9',
     flex: 1,
-  },  
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingTop: 20,
+  },
+  headerButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+  },
+  backButton: {
+    backgroundColor: '#2196f3',
+  },
+  headerButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
   title: {
     fontSize: 24,
     marginBottom: 20,
