@@ -22,7 +22,7 @@ export default function LoginScreen() {
   // If user is already logged in, redirect to calendar
   useEffect(() => {
     if (!loading && session) {
-      router.replace("/calendar");
+      router.replace("/home");
     }
   }, [session, loading, router]);
 
@@ -75,7 +75,7 @@ export default function LoginScreen() {
       
       console.log("Navigating to /calendar...");
       // Navigate to calendar after successful login
-      router.replace("/calendar");
+      router.replace("/home");
       
       console.log("Navigation command sent");
     } catch (error: any) {
