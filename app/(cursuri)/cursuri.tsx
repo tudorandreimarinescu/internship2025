@@ -10,7 +10,7 @@ export default function CoursesScreen() {
       <Text style={styles.title}>Lista de cursuri</Text>
 
       {loading ? (
-        <Text>Se încarcă...</Text>
+        <Text style={styles.loadingText}>Se încarcă...</Text>
       ) : (
         <FlatList
           data={courses}
@@ -19,7 +19,7 @@ export default function CoursesScreen() {
             <View style={styles.item}>
               {Object.entries(item).map(([key, value]) => (
                 <Text key={key} style={styles.field}>
-                  {key}: {String(value)}
+                  <Text style={styles.fieldKey}>{key}:</Text> {String(value)}
                 </Text>
               ))}
             </View>
@@ -34,19 +34,40 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     marginTop: 20,
-  },
+    backgroundColor: '#f9f9f9',
+    flex: 1,
+  },  
   title: {
-    fontSize: 22,
-    marginBottom: 10,
+    fontSize: 24,
+    marginBottom: 20,
     fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 20,
   },
   item: {
     padding: 15,
-    marginBottom: 10,
+    marginBottom: 15,
     borderRadius: 8,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   field: {
     fontSize: 14,
-    marginBottom: 2,
+    marginBottom: 5,
+    color: '#555',
+  },
+  fieldKey: {
+    fontWeight: 'bold',
+    color: '#333',
   },
 });

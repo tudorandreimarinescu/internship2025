@@ -16,7 +16,7 @@ export default function Index() {
 
   // If user is authenticated, go to calendar; otherwise go to login
   if (session) {
-    return <Redirect href="/calendar" />;
+    return <Redirect href="/home" />;
   }
 
   return <Redirect href="/login" />;
