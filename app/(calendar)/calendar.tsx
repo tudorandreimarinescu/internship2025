@@ -1,4 +1,3 @@
-import React from 'react';
 import { FlatList, Text, useColorScheme, View, TouchableOpacity } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { useCalendar } from '../../context/CalendarContext';
