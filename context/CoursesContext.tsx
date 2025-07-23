@@ -2,6 +2,11 @@
 import { supabase } from '@/lib/supabase';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
+type CoursesProviderProps = {
+  children: React.ReactNode;
+  studentYear: number | undefined;
+};
+
 interface Course {
   id: number;
   title: string;
@@ -23,7 +28,7 @@ const CoursesContext = createContext<CoursesContextType | undefined>(undefined);
 
 const PAGE_SIZE = 5;
 
-export const CoursesProvider = ({ children }: { children: React.ReactNode }) => {
+export const CoursesProvider = ({ children, studentYear }: CoursesProviderProps) => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [page, setPage] = useState<number>(0);
@@ -42,10 +47,11 @@ export const CoursesProvider = ({ children }: { children: React.ReactNode }) => 
     if (error) {
       console.error('Eroare Supabase:', error.message);
     } else {
+      const filteredCourses = data.filter((item) => item.An === studentYear);
       if (pageIndex === 0) {
-        setCourses(data || []);
+        setCourses(filteredCourses || []);
       } else {
-        setCourses((prev) => [...prev, ...(data || [])]);
+        setCourses((prev) => [...prev, ...(filteredCourses || [])]);
       }
 
       const totalCount = count ?? 0;
