@@ -19,10 +19,10 @@ export default function LoginScreen() {
   const router = useRouter();
   const { login, session, loading } = useAuth();
 
-  // If user is already logged in, redirect to calendar
+  // If user is already logged in, redirect to home
   useEffect(() => {
     if (!loading && session) {
-      router.replace("/home");
+      router.replace("/(cursuri)/home");
     }
   }, [session, loading, router]);
 
@@ -59,8 +59,8 @@ export default function LoginScreen() {
             { 
               text: "Da", 
               onPress: () => {
-                console.log("User chose to continue without profile, navigating to calendar");
-                router.replace("/calendar");
+                console.log("User chose to continue without profile, navigating to home");
+                router.replace("/(cursuri)/home");
               }
             }
           ]
@@ -73,9 +73,9 @@ export default function LoginScreen() {
       // Step 3: Add a small delay before navigation to ensure auth state is properly set
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      console.log("Navigating to /home...");
-      // Navigate to calendar after successful login
-      router.replace("/home");
+      console.log("Navigating to /(cursuri)/home...");
+      // Navigate to home after successful login
+      router.replace("/(cursuri)/home");
       
       console.log("Navigation command sent");
     } catch (error: any) {

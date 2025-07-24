@@ -1,7 +1,7 @@
 import { FlatList, Text, useColorScheme, View, TouchableOpacity } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { useCalendar } from '../../context/CalendarContext';
-import { useNavigation } from '@react-navigation/native'; // Import pentru navigare
+import { useRouter } from 'expo-router'; // Import pentru routing
 
 function generateColorForCourse(courseName: string): string {
   const colors = ['#FF5733', '#33FF57', '#3357FF', '#FF33A1', '#A133FF', '#33FFF5', '#FF8C00', '#8A2BE2'];
@@ -24,13 +24,17 @@ export default function CalendarPage() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  const navigation = useNavigation(); // Hook pentru navigare
+  const router = useRouter(); // Hook pentru routing
+
+  const handleGoBack = () => {
+    router.back(); // Use expo-router's back method
+  };
 
   return (
     <View style={{ flex: 1, paddingTop: 50, backgroundColor: isDark ? '#000' : '#fff' }}>
       {/* Buton pentru a merge inapoi */}
       <TouchableOpacity
-        onPress={() => navigation.goBack()} // Navigheaza inapoi pe home
+        onPress={handleGoBack} // Navigheaza inapoi pe home
         style={{
           padding: 10,
           backgroundColor: '#2196f3',

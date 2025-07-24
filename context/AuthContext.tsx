@@ -67,19 +67,41 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [studentLoaded, setStudentLoaded] = useState(false); // Track if we've already loaded student
 
+  const loadStudentProfile = useCallback(async (email: string): Promise<Student | null> => {
+    try {
+      console.log('Loading student profile for:', email);
+      const studentProfile = await StudentService.getStudentByEmail(email);
+      console.log('Student profile loaded:', studentProfile ? `${studentProfile.Prenume} ${studentProfile.Nume}` : 'No profile found');
+      return studentProfile;
+    } catch (error) {
+      console.error("Error loading student profile:", error);
+      return null;
+    }
+  }, []); // Memoize the function to prevent unnecessary recreations
+
   useEffect(() => {
     const init = async () => {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-      
-      // If we have a session, try to load student profile
-      if (data.session?.user?.email) {
-        const studentProfile = await loadStudentProfile(data.session.user.email);
-        setStudent(studentProfile);
-        setStudentLoaded(true);
+      console.log('AuthContext: Starting initialization...');
+      try {
+        const { data } = await supabase.auth.getSession();
+        console.log('AuthContext: Got session data:', !!data.session);
+        setSession(data.session);
+        
+        // If we have a session, try to load student profile
+        if (data.session?.user?.email) {
+          console.log('AuthContext: Loading student profile for:', data.session.user.email);
+          const studentProfile = await loadStudentProfile(data.session.user.email);
+          setStudent(studentProfile);
+          setStudentLoaded(true);
+          console.log('AuthContext: Student profile loaded:', !!studentProfile);
+        }
+        
+        console.log('AuthContext: Setting loading to false');
+        setLoading(false);
+      } catch (error) {
+        console.error('AuthContext: Error during initialization:', error);
+        setLoading(false);
       }
-      
-      setLoading(false);
     };
 
     init();
@@ -106,7 +128,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       listener.subscription.unsubscribe();
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -122,18 +145,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const yearNum = parseInt(year);
     return yearNum >= 1 && yearNum <= 6;
   };
-
-  const loadStudentProfile = useCallback(async (email: string): Promise<Student | null> => {
-    try {
-      console.log('Loading student profile for:', email);
-      const studentProfile = await StudentService.getStudentByEmail(email);
-      console.log('Student profile loaded:', studentProfile ? `${studentProfile.Prenume} ${studentProfile.Nume}` : 'No profile found');
-      return studentProfile;
-    } catch (error) {
-      console.error("Error loading student profile:", error);
-      return null;
-    }
-  }, []); // Memoize the function to prevent unnecessary recreations
 
   const login = async (credentials: LoginCredentials): Promise<AuthResult> => {
     const { email, password } = credentials;
