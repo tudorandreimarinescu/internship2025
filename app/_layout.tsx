@@ -6,9 +6,7 @@ import { CalendarProvider } from '../context/CalendarContext';
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <CalendarProvider>
         <Stack screenOptions={{ headerShown: false }} />
-      </CalendarProvider>
     </AuthProvider>
   );
 }

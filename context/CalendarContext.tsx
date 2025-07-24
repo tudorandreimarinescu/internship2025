@@ -1,6 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
 
+type CalendarProviderProps = {
+  children: React.ReactNode;
+  studentYear: number | undefined; // Add this prop
+};
 
 // Tipul datelor unui curs
 export type Curs = {
@@ -10,6 +14,7 @@ export type Curs = {
   Tip_curs: string;
   Profesor: string;
   Sala: string;
+  An: number;
 };
 
 // Tipul contextului
@@ -23,23 +28,34 @@ type CalendarContextType = {
   handleDayPress: (day: { dateString: string }) => void;
 };
 
+const CalendarContext = createContext<CalendarContextType | undefined>(
+  undefined
+);
 
-const CalendarContext = createContext<CalendarContextType | undefined>(undefined);
-
-export const CalendarProvider = ({ children }: { children: React.ReactNode }) => {
+export const CalendarProvider = ({
+  children,
+  studentYear,
+}: CalendarProviderProps) => {
   const [markedDates, setMarkedDates] = useState<Record<string, any>>({});
   const [cursuri, setCursuri] = useState<Curs[]>([]);
-  const [selectedDate, setSelectedDate] = useState('');
-  const currentDate = new Date().toISOString().split('T')[0];
-  
+  const [selectedDate, setSelectedDate] = useState("");
+  const currentDate = new Date().toISOString().split("T")[0];
+
   const handleDayPress = (day: { dateString: string }) => {
     setSelectedDate(day.dateString);
     fetchCursuriForDate(day.dateString);
   };
-  
+
   // Funcție pentru a genera o culoare unică pe baza numelui cursului
   const generateColorForCourse = (courseName: string): string => {
-    const colors = ['#FF5733', '#33FF57', '#3357FF', '#FF33A1', '#A133FF', '#33FFF5'];
+    const colors = [
+      "#FF5733",
+      "#33FF57",
+      "#3357FF",
+      "#FF33A1",
+      "#A133FF",
+      "#33FFF5",
+    ];
     let hash = 0;
     for (let i = 0; i < courseName.length; i++) {
       hash = courseName.charCodeAt(i) + ((hash << 5) - hash);
@@ -50,54 +66,64 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode }) =>
   useEffect(() => {
     const fetchDates = async () => {
       const { data, error } = await supabase
-        .from('Cursuri')
-        .select('Data, Nume');
+        .from("Cursuri")
+        .select("Data, Nume, An");
 
       if (error) {
-        console.error('Eroare la citirea datelor:', error.message);
+        console.error("Eroare la citirea datelor:", error.message);
         return;
       }
 
       const marcate: Record<string, any> = {};
-      data.forEach(item => {
-        if (item.Data) {
-          if (!marcate[item.Data]) {
-            marcate[item.Data] = { dots: [] };
+      data
+        .filter((item) => item.An === studentYear)
+        .forEach((item) => {
+          if (item.Data) {
+            if (!marcate[item.Data]) {
+              marcate[item.Data] = { dots: [] };
+            }
+
+            const color = generateColorForCourse(item.Nume); // Generează culoarea pentru curs
+
+            marcate[item.Data].dots.push({
+              key: `${item.Nume}`, // ID-ul cursului
+              color: color, // Culoarea generată
+              selectedDotColor: "white",
+            });
           }
-
-          const color = generateColorForCourse(item.Nume); // Generează culoarea pentru curs
-
-          marcate[item.Data].dots.push({
-            key: `${item.Nume}`, // ID-ul cursului
-            color: color, // Culoarea generată
-            selectedDotColor: 'white',
-          });
-        }
-      });
+        });
 
       setMarkedDates(marcate);
     };
 
     fetchDates();
-  }, []);
+  }, [studentYear]);
 
   const fetchCursuriForDate = async (date: string) => {
     const { data, error } = await supabase
-      .from('Cursuri')
-      .select('Ora, Nume, Tip_curs, Profesor, Sala, Data')
-      .eq('Data', date);
+      .from("Cursuri")
+      .select("Ora, Nume, Tip_curs, Profesor, Sala, Data, An")
+      .eq("Data", date);
 
     if (error) {
-      console.error('Eroare la citirea cursurilor:', error.message);
+      console.error("Eroare la citirea cursurilor:", error.message);
       return;
     }
-
-    setCursuri(data || []);
+    const filterdCourses = data.filter((item) => item.An === studentYear);
+    setCursuri(filterdCourses || []);
   };
 
   return (
     <CalendarContext.Provider
-      value={{ markedDates, cursuri, selectedDate, setSelectedDate, fetchCursuriForDate, currentDate, handleDayPress }}
+      value={{
+        markedDates,
+        cursuri,
+        selectedDate,
+        setSelectedDate,
+        fetchCursuriForDate,
+        currentDate,
+        handleDayPress,
+      }}
     >
       {children}
     </CalendarContext.Provider>
@@ -106,6 +132,7 @@ export const CalendarProvider = ({ children }: { children: React.ReactNode }) =>
 
 export const useCalendar = () => {
   const context = useContext(CalendarContext);
-  if (!context) throw new Error('useCalendar must be used within a CalendarProvider');
+  if (!context)
+    throw new Error("useCalendar must be used within a CalendarProvider");
   return context;
 };
