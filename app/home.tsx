@@ -1,10 +1,20 @@
 import { Link } from 'expo-router';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { supabase } from '../lib/supabase'; // Asigură-te că ai configurat supabase
 
 export default function HomeScreen() {
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      Alert.alert('Eroare', 'A apărut o problemă la deconectare.');
+    } else {
+      Alert.alert('Succes', 'Te-ai deconectat cu succes.');
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Bine ai venit!</Text>
+      <Text style={styles.title}>Bine ai venit</Text> 
       
       <View style={styles.buttonContainer}>
         <Link href="../calendar" asChild>
@@ -20,6 +30,12 @@ export default function HomeScreen() {
             <Text style={styles.buttonText}>Mergi la cursuri</Text>
           </TouchableOpacity>
         </Link>
+      </View>
+
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={handleLogout}>
+          <Text style={styles.buttonText}>Logout</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -54,5 +70,8 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  logoutButton: {
+    backgroundColor: '#D32F2F', // Culoare roșie pentru butonul de logout
   },
 });

@@ -17,9 +17,9 @@ export default function CoursesScreen() {
           keyExtractor={(item) => item.id?.toString() ?? Math.random().toString()}
           renderItem={({ item }) => (
             <View style={styles.item}>
-              {Object.entries(item).map(([key, value]) => (
+              {['Nume', 'Ora', 'Data','Nr_credite'].map((key) => (
                 <Text key={key} style={styles.field}>
-                  <Text style={styles.fieldKey}>{key}:</Text> {String(value)}
+                  <Text style={styles.fieldKey}>{key}:</Text> {String(item[key] || 'N/A')}
                 </Text>
               ))}
             </View>
