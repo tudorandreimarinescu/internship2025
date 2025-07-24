@@ -1,5 +1,5 @@
-import { useRouter } from "expo-router";
-import React, { useState, useEffect } from "react";
+import { useRouter } from 'expo-router';
+import React, { useState, useEffect } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -8,140 +8,172 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from "react-native";
-import { LoginCredentials, useAuth } from "../../context/AuthContext";
-import { sharedStyles as styles } from "../../styles/shared";
+  useColorScheme,
+} from 'react-native';
+import { LoginCredentials, useAuth } from '@/context/AuthContext';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { login, session, loading } = useAuth();
+  const isDark = useColorScheme() === 'dark';
 
-  // If user is already logged in, redirect to home
   useEffect(() => {
     if (!loading && session) {
-      router.replace("/home");
+      router.replace('/home');
     }
   }, [session, loading, router]);
 
   const handleLogin = async () => {
-    if (isLoading) return; // Prevent multiple submissions
-    
+    if (isLoading) return;
+
     setIsLoading(true);
     try {
-      console.log("Încep procesul de autentificare pentru:", email);
-      
       const credentials: LoginCredentials = { email, password };
       const result = await login(credentials);
-      
+
       if (!result.success) {
-        const error = result.error!;
-        console.error("Login failed with error:", error);
-        Alert.alert("Eroare autentificare", error.message);
+        Alert.alert('Eroare autentificare', result.error?.message || 'Eroare necunoscută');
         return;
       }
 
-      console.log("Autentificare reușită pentru:", result.user?.email);
-      console.log("Student profile găsit:", !!result.student);
-      
       if (!result.student) {
-        console.warn("No student profile found, showing alert");
         Alert.alert(
-          "Profil lipsă", 
-          "Contul există dar profilul de student nu a fost găsit. Continuați oricum?",
+          'Profil lipsă',
+          'Contul există dar profilul de student nu a fost găsit. Continuați oricum?',
           [
-            { 
-              text: "Nu", 
-              style: "cancel"
-            },
-            { 
-              text: "Da", 
-              onPress: () => {
-                console.log("User chose to continue without profile, navigating to home");
-                router.replace("/home");
-              }
-            }
+            { text: 'Nu', style: 'cancel' },
+            { text: 'Da', onPress: () => router.replace('/home') },
           ]
         );
         return;
       }
-      
-      console.log("Student profile found, proceeding with navigation");
-      
-      // Step 3: Add a small delay before navigation to ensure auth state is properly set
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      console.log("Navigating to /home...");
-      // Navigate to home after successful login
-      router.replace("/home");
-      
-      console.log("Navigation command sent");
+
+      await new Promise((res) => setTimeout(res, 300));
+      router.replace('/home');
     } catch (error: any) {
-      console.error("Excepție în procesul de autentificare:", error);
-      Alert.alert("Eroare neașteptată", error.message || "A apărut o eroare la autentificare");
+      Alert.alert('Eroare', error.message || 'A apărut o eroare');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Image
-        source={require("../../assets/images/login.png")}
-        style={styles.image}
-        resizeMode="contain"
-      />
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: isDark ? '#000' : '#fff',
+        paddingTop: 50,
+        paddingHorizontal: 20,
+        alignItems: 'center',
+      }}
+    >
+      {/* Imagine cu overlay negru în dark mode */}
+      <View style={{ position: 'relative', marginBottom: 20 }}>
+        <Image
+          source={require('../../assets/images/login.png')}
+          style={{
+            width: 200,
+            height: 200,
+            borderRadius: 10,
+            resizeMode: 'contain',
+          }}
+        />
+        {isDark && (
+          <View
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: '#000',
+              opacity: 0.4,
+              borderRadius: 10,
+            }}
+          />
+        )}
+      </View>
 
-      <Text style={styles.title}>Login</Text>
+      <Text
+        style={{
+          fontSize: 24,
+          fontWeight: 'bold',
+          color: isDark ? '#fff' : '#000',
+          marginBottom: 20,
+        }}
+      >
+        Login
+      </Text>
 
       <TextInput
         placeholder="Enter your email"
+        placeholderTextColor={isDark ? '#888' : '#aaa'}
         value={email}
         onChangeText={setEmail}
-        style={styles.input}
+        style={{
+          width: '100%',
+          backgroundColor: isDark ? '#1e1e1e' : '#f5f5f5',
+          color: isDark ? '#fff' : '#000',
+          padding: 12,
+          borderRadius: 8,
+          marginBottom: 12,
+        }}
         keyboardType="email-address"
         autoCapitalize="none"
       />
+
       <TextInput
         placeholder="Enter your password"
+        placeholderTextColor={isDark ? '#888' : '#aaa'}
         value={password}
         onChangeText={setPassword}
-        style={styles.input}
+        style={{
+          width: '100%',
+          backgroundColor: isDark ? '#1e1e1e' : '#f5f5f5',
+          color: isDark ? '#fff' : '#000',
+          padding: 12,
+          borderRadius: 8,
+          marginBottom: 20,
+        }}
         secureTextEntry
       />
 
-      <TouchableOpacity 
-        style={[styles.button, isLoading && styles.buttonDisabled]} 
+      <TouchableOpacity
         onPress={handleLogin}
         disabled={isLoading}
+        style={{
+          width: '100%',
+          backgroundColor: isLoading ? '#888' : '#2196f3',
+          padding: 14,
+          borderRadius: 8,
+          alignItems: 'center',
+          flexDirection: 'row',
+          justifyContent: 'center',
+          marginBottom: 20,
+        }}
       >
-        {isLoading ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <ActivityIndicator size="small" color="#fff" style={{ marginRight: 8 }} />
-            <Text style={styles.buttonText}>Logging in...</Text>
-          </View>
-        ) : (
-          <Text style={styles.buttonText}>Continue</Text>
-        )}
+        {isLoading && <ActivityIndicator size="small" color="#fff" style={{ marginRight: 8 }} />}
+        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
+          {isLoading ? 'Logging in...' : 'Continue'}
+        </Text>
       </TouchableOpacity>
 
-      <View style={{ flexDirection: "row", marginBottom: 10 }}>
-        <Text>Don&apos;t have an account?{" "}</Text>
-        <TouchableOpacity 
-          onPress={() => !isLoading && router.push("/(auth)/register")}
-          disabled={isLoading}
-        >
-          <Text style={[styles.link, isLoading && { opacity: 0.5 }]}>Register here</Text>
+      <View style={{ flexDirection: 'row', marginBottom: 10 }}>
+        <Text style={{ color: isDark ? '#aaa' : '#333' }}>Don't have an account? </Text>
+        <TouchableOpacity onPress={() => router.push('/(auth)/register')} disabled={isLoading}>
+          <Text style={{ color: '#2196f3', fontWeight: 'bold', opacity: isLoading ? 0.5 : 1 }}>
+            Register here
+          </Text>
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity 
-        onPress={() => !isLoading && router.push("/(auth)/forget-password")}
-        disabled={isLoading}
-      >
-        <Text style={[styles.link, isLoading && { opacity: 0.5 }]}>Forget password</Text>
+      <TouchableOpacity onPress={() => router.push('/(auth)/forget-password')} disabled={isLoading}>
+        <Text style={{ color: '#2196f3', fontWeight: 'bold', opacity: isLoading ? 0.5 : 1 }}>
+          Forget password
+        </Text>
       </TouchableOpacity>
     </View>
   );

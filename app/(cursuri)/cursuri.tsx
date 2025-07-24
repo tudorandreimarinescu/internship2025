@@ -1,43 +1,79 @@
 import { useCourses } from '@/context/CoursesContext';
 import React from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { useNavigation} from 'expo-router';
-import { TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  useColorScheme,
+  ActivityIndicator,
+} from 'react-native';
+import { useNavigation } from 'expo-router';
 
 export default function CoursesScreen() {
   const { courses, loading, loadMoreCourses, hasMore } = useCourses();
   const navigation = useNavigation();
+  const isDark = useColorScheme() === 'dark';
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: isDark ? '#000' : '#fff' }]}>
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-        <Ionicons name="arrow-back" size={24} color="#333" />
-        <Text style ={styles.backButtonText}>Înapoi</Text>
-        </TouchableOpacity>
-      <Text style={styles.title}>Lista de cursuri</Text>
+        <Text style={[styles.backButtonText, { color: '#2196f3' }]}>← Înapoi</Text>
+      </TouchableOpacity>
+
+      <Text style={[styles.title, { color: isDark ? '#fff' : '#000' }]}>
+        Lista de cursuri
+      </Text>
 
       <FlatList
         data={courses}
         keyExtractor={(item) => item.id?.toString() ?? Math.random().toString()}
         renderItem={({ item }) => (
-          <View style={styles.item}>
-            {['Nume', 'Nr_credite', 'Profesor', 'Sala', 'Tip_evaluare', 'Ora', 'Data', 'Tip_curs', 'Semestru', 'An' ].map((key) => (
-              <Text key={key} style={styles.field}>
-                <Text style={styles.fieldKey}>{key}:</Text> {String(item[key] || 'N/A')}
+          <View style={[styles.item, { backgroundColor: isDark ? '#1e1e1e' : '#f9f9f9' }]}>
+            {[
+              'Nume',
+              'Nr_credite',
+              'Profesor',
+              'Sala',
+              'Tip_evaluare',
+              'Ora',
+              'Data',
+              'Tip_curs',
+              'Semestru',
+              'An',
+            ].map((key) => (
+              <Text
+                key={key}
+                style={{
+                  fontSize: 14,
+                  marginBottom: 3,
+                  color: isDark ? '#ccc' : '#333',
+                }}
+              >
+                <Text style={{ fontWeight: 'bold' }}>{key}:</Text> {String(item[key] || 'N/A')}
               </Text>
             ))}
           </View>
         )}
         ListFooterComponent={
-          loading ? <Text style={styles.loadingText}>Se încarcă...</Text> : null
+          loading ? (
+            <View style={{ paddingVertical: 20 }}>
+              <ActivityIndicator size="small" color="#2196f3" />
+              <Text style={{ textAlign: 'center', color: isDark ? '#888' : '#555', marginTop: 8 }}>
+                Se încarcă...
+              </Text>
+            </View>
+          ) : null
         }
         onEndReached={() => {
           if (!loading && hasMore) {
             loadMoreCourses();
           }
         }}
-        onEndReachedThreshold={0.5} // la 50% de scroll de jos declanșează
+        onEndReachedThreshold={0.5}
+        contentContainerStyle={{ paddingBottom: 50 }}
+        showsVerticalScrollIndicator={false}
       />
     </View>
   );
@@ -45,53 +81,25 @@ export default function CoursesScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    marginTop: 20,
-    backgroundColor: '#f9f9f9',
     flex: 1,
+    paddingTop: 50,
+    paddingHorizontal: 20,
   },
   title: {
     fontSize: 24,
-    marginBottom: 20,
     fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: '#666',
     textAlign: 'center',
     marginVertical: 20,
   },
   item: {
-    padding: 15,
-    marginBottom: 15,
-    borderRadius: 8,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  field: {
-    fontSize: 14,
-    marginBottom: 5,
-    color: '#555',
-  },
-  fieldKey: {
-    fontWeight: 'bold',
-    color: '#333',
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 12,
   },
   backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    marginTop: 10,
+    marginBottom: 10,
   },
   backButtonText: {
     fontSize: 16,
-    color: '#333',
-    marginLeft: 8,
   },
 });
