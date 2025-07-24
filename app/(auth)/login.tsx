@@ -22,7 +22,7 @@ export default function LoginScreen() {
   // If user is already logged in, redirect to home
   useEffect(() => {
     if (!loading && session) {
-      router.replace("/(cursuri)/home");
+      router.replace("/home");
     }
   }, [session, loading, router]);
 
@@ -60,7 +60,7 @@ export default function LoginScreen() {
               text: "Da", 
               onPress: () => {
                 console.log("User chose to continue without profile, navigating to home");
-                router.replace("/(cursuri)/home");
+                router.replace("/home");
               }
             }
           ]
@@ -73,9 +73,9 @@ export default function LoginScreen() {
       // Step 3: Add a small delay before navigation to ensure auth state is properly set
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      console.log("Navigating to /(cursuri)/home...");
+      console.log("Navigating to /home...");
       // Navigate to home after successful login
-      router.replace("/(cursuri)/home");
+      router.replace("/home");
       
       console.log("Navigation command sent");
     } catch (error: any) {

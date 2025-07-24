@@ -10,7 +10,7 @@ export default function HomeScreen() {
 
   const handleLogout = async () => {
     await logout();
-    router.replace('/(auth)'); // Redirect to auth index screen
+    router.replace('/(auth)/login'); // Redirect to auth index screen
   };
 
   return (
@@ -41,11 +41,6 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={handleLogout}>
-          <Text style={styles.buttonText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
@@ -83,7 +78,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  logoutButton: {
-    backgroundColor: '#D32F2F', // Culoare roșie pentru butonul de logout
-  },
+  
 });
