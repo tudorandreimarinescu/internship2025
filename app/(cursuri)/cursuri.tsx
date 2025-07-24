@@ -1,12 +1,20 @@
 import { useCourses } from '@/context/CoursesContext';
 import React from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { useNavigation} from 'expo-router';
+import { TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function CoursesScreen() {
   const { courses, loading, loadMoreCourses, hasMore } = useCourses();
+  const navigation = useNavigation();
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Ionicons name="arrow-back" size={24} color="#333" />
+        <Text style ={styles.backButtonText}>Înapoi</Text>
+        </TouchableOpacity>
       <Text style={styles.title}>Lista de cursuri</Text>
 
       <FlatList
@@ -74,5 +82,16 @@ const styles = StyleSheet.create({
   fieldKey: {
     fontWeight: 'bold',
     color: '#333',
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    marginTop: 10,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#333',
+    marginLeft: 8,
   },
 });

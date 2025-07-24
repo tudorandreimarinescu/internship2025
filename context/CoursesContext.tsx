@@ -48,11 +48,11 @@ export const CoursesProvider = ({ children, studentYear }: CoursesProviderProps)
       console.error('Eroare Supabase:', error.message);
     } else {
       const filteredCourses = data.filter((item) => item.An === studentYear);
-      if (pageIndex === 0) {
-        setCourses(filteredCourses || []);
-      } else {
+      // if (pageIndex === 0) {
+      //   setCourses(filteredCourses || []);
+      // } else {
         setCourses((prev) => [...prev, ...(filteredCourses || [])]);
-      }
+      // }
 
       const totalCount = count ?? 0;
       const loadedCount = (pageIndex + 1) * PAGE_SIZE;
