@@ -1,31 +1,44 @@
 import { useCourses } from '@/context/CoursesContext';
 import React from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { useNavigation} from 'expo-router';
+import { TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function CoursesScreen() {
-  const { courses, loading } = useCourses();
+  const { courses, loading, loadMoreCourses, hasMore } = useCourses();
+  const navigation = useNavigation();
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Ionicons name="arrow-back" size={24} color="#333" />
+        <Text style ={styles.backButtonText}>Înapoi</Text>
+        </TouchableOpacity>
       <Text style={styles.title}>Lista de cursuri</Text>
 
-      {loading ? (
-        <Text style={styles.loadingText}>Se încarcă...</Text>
-      ) : (
-        <FlatList
-          data={courses}
-          keyExtractor={(item) => item.id?.toString() ?? Math.random().toString()}
-          renderItem={({ item }) => (
-            <View style={styles.item}>
-              {['Nume', 'Ora', 'Data','Nr_credite'].map((key) => (
-                <Text key={key} style={styles.field}>
-                  <Text style={styles.fieldKey}>{key}:</Text> {String(item[key] || 'N/A')}
-                </Text>
-              ))}
-            </View>
-          )}
-        />
-      )}
+      <FlatList
+        data={courses}
+        keyExtractor={(item) => item.id?.toString() ?? Math.random().toString()}
+        renderItem={({ item }) => (
+          <View style={styles.item}>
+            {['Nume', 'Nr_credite', 'Profesor', 'Sala', 'Tip_evaluare', 'Ora', 'Data', 'Tip_curs', 'Semestru', 'An' ].map((key) => (
+              <Text key={key} style={styles.field}>
+                <Text style={styles.fieldKey}>{key}:</Text> {String(item[key] || 'N/A')}
+              </Text>
+            ))}
+          </View>
+        )}
+        ListFooterComponent={
+          loading ? <Text style={styles.loadingText}>Se încarcă...</Text> : null
+        }
+        onEndReached={() => {
+          if (!loading && hasMore) {
+            loadMoreCourses();
+          }
+        }}
+        onEndReachedThreshold={0.5} // la 50% de scroll de jos declanșează
+      />
     </View>
   );
 }
@@ -36,7 +49,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     backgroundColor: '#f9f9f9',
     flex: 1,
-  },  
+  },
   title: {
     fontSize: 24,
     marginBottom: 20,
@@ -48,7 +61,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
-    marginTop: 20,
+    marginVertical: 20,
   },
   item: {
     padding: 15,
@@ -69,5 +82,16 @@ const styles = StyleSheet.create({
   fieldKey: {
     fontWeight: 'bold',
     color: '#333',
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    marginTop: 10,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#333',
+    marginLeft: 8,
   },
 });
